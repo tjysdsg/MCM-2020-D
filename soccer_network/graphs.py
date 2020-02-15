@@ -1,5 +1,10 @@
 from soccer_network.data import *
 from soccer_network.network import Network, ZonedNetwork
+from graph_tool import load_graph
+
+
+def load_graphml(file: str):
+    return load_graph(file)
 
 
 def build_network_graphml(match_id: int):

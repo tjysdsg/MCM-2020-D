@@ -1,15 +1,14 @@
 from soccer_network.data import (match_ids, huskies_player_ids, huskies_events, huskies_passes, matches_df, all_events,
                                  events_df)
 from soccer_network.graphs import load_graphml
-from graph_tool import clustering, Graph
+from graph_tool import Graph, clustering, correlations
 import pandas as pd
 import numpy as np
 from typing import Tuple, List, Callable, Any
 
 """
-clustering
-motifs
 centrality
+correlations
 flow
 dynamics
 configuration model
@@ -43,6 +42,17 @@ def post_passing_volume(results: Tuple):
     mean, sigma = zip(
         *results)  # https://stackoverflow.com/questions/13635032/what-is-the-inverse-function-of-zip-in-python
     df = pd.DataFrame(dict(MatchID=match_ids, pv_mean=mean, pv_sigma=sigma))
+    df = matches_df[['Outcome', 'OwnScore']].join(df, how='right')
+    print(df.corr())
+
+
+def assortativity(g: Graph):
+    return correlations.assortativity(g, 'total', g.edge_properties['weight'])
+
+
+def post_assortativity(results):
+    mean, variance = zip(*results)
+    df = pd.DataFrame(dict(MatchID=match_ids, assort_mean=mean, assort_var=variance))
     df = matches_df[['Outcome', 'OwnScore']].join(df, how='right')
     print(df.corr())
 
@@ -90,8 +100,8 @@ if __name__ == "__main__":
 
     print('Calculating metrics...')
     # run a single metric
-    # run_metric(graphs, clustering_coefficient, post_clustering_coefficient)
+    run_metric(graphs, assortativity, post_assortativity)
 
     # or run all metrics
-    for m, pm in zip(metrics, post_metrics):
-        run_metric(graphs, m, pm)
+    # for m, pm in zip(metrics, post_metrics):
+    #     run_metric(graphs, m, pm)

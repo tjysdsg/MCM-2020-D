@@ -34,7 +34,7 @@ def post_clustering_coefficient(results):
 
 def passing_volume(g: Graph):
     vs = g.get_vertices()
-    total = g.get_in_degrees(vs) + g.get_out_degrees(vs)
+    total = g.get_total_degrees(vs, g.edge_properties['weight'])
     return np.mean(total), np.std(total)
 
 
@@ -44,9 +44,7 @@ def post_passing_volume(results: Tuple):
         *results)  # https://stackoverflow.com/questions/13635032/what-is-the-inverse-function-of-zip-in-python
     df = pd.DataFrame(dict(MatchID=match_ids, pv_mean=mean, pv_sigma=sigma))
     df = matches_df[['Outcome', 'OwnScore']].join(df, how='right')
-    df.corr()
-    # df.plot(x='pv_mean', y='OwnScore', kind='scatter')
-    # plt.show()
+    print(df.corr())
 
 
 def motifs(g: Graph, k: int = 3):

@@ -26,16 +26,16 @@ def get_mean_std_of_scalar_vertex_properties(vps: List[VertexPropertyMap]):
     return mean, std
 
 
-def clustering_coefficient(g: Graph):
-    return clustering.local_clustering(g, weight=g.edge_properties['weight'], undirected=False)
-
-
-def post_clustering_coefficient(results):
+def post_results_as_vertex_properties(results: List[VertexPropertyMap]):
     mean, std = get_mean_std_of_scalar_vertex_properties(results)
-    df = pd.DataFrame(dict(MatchID=match_ids, cc_mean=mean, cc_std=std))
+    df = pd.DataFrame(dict(MatchID=match_ids, mean=mean, std=std))
     df = matches_df[['Outcome', 'OwnScore']].join(df, how='right')
     print(df.corr())
     return mean, std
+
+
+def clustering_coefficient(g: Graph):
+    return clustering.local_clustering(g, weight=g.edge_properties['weight'], undirected=False)
 
 
 def passing_volume(g: Graph):
@@ -78,25 +78,19 @@ def pagerank_centrality(g: Graph):
     return centrality.pagerank(g, weight=g.edge_properties['weight'])
 
 
-def post_pagerank_centrality(results):
-    mean, std = get_mean_std_of_scalar_vertex_properties(results)
-    df = pd.DataFrame(dict(MatchID=match_ids, pagerank_mean=mean, pagerank_std=std))
-    df = matches_df[['Outcome', 'OwnScore']].join(df, how='right')
-    print(df.corr())
-    return mean, std
-
-
 def closeness_centrality(g: Graph):
     return centrality.closeness(g, weight=g.edge_properties['weight'])
 
 
-def post_closeness_centrality(results):
-    mean, std = get_mean_std_of_scalar_vertex_properties(results)
-    df = pd.DataFrame(dict(MatchID=match_ids, closeness_mean=mean, closeness_std=std))
-    df = matches_df[['Outcome', 'OwnScore']].join(df, how='right')
-    print(df.corr())
-    return mean, std
+def betweenness_centrality(g: Graph):
+    return centrality.betweenness(g, weight=g.edge_properties['weight'])[0]
 
+
+post_pagerank_centrality = \
+    post_closeness_centrality = \
+    post_beweenness_centrality = \
+    post_clustering_coefficient = \
+    post_results_as_vertex_properties
 
 # TODO: add your metrics here, the function should have only one required argument and can return anything you like
 metrics: List[Callable] = [
@@ -105,6 +99,7 @@ metrics: List[Callable] = [
     assortativity,
     pagerank_centrality,
     closeness_centrality,
+    betweenness_centrality,
     motifs,
 ]
 
@@ -117,6 +112,7 @@ post_metrics: List[Callable] = [
     post_assortativity,
     post_pagerank_centrality,
     post_closeness_centrality,
+    post_beweenness_centrality,
     post_motifs,
 ]
 
@@ -124,7 +120,6 @@ post_metrics: List[Callable] = [
 def run_metric(gs: List[Graph], metric: Callable[[Graph], Any], post_metric: Callable):
     print('Running {0}'.format(metric.__name__))
     results = [metric(g) for g in gs]
-    print('Running {0}'.format(post_metric.__name__))
     post_metric(results)
 
 
@@ -135,8 +130,8 @@ if __name__ == "__main__":
 
     print('Calculating metrics...')
     # run a single metric
-    run_metric(graphs, clustering_coefficient, post_clustering_coefficient)
+    # run_metric(graphs, clustering_coefficient, post_clustering_coefficient)
 
     # or run all metrics
-    # for m, pm in zip(metrics, post_metrics):
-    #     run_metric(graphs, m, pm)
+    for m, pm in zip(metrics, post_metrics):
+        run_metric(graphs, m, pm)

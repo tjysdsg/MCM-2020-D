@@ -69,9 +69,13 @@ def motifs(g: Graph, k: int = 3):
 
 
 def post_motifs(results: List[Tuple]):
-    sorted_zs = [np.asarray(z)[::-1] for _, z in results]
-    print(np.mean(sorted_zs, axis=1))
-    return sorted_zs
+    n_high_z = np.asarray([np.count_nonzero(
+        np.abs(np.asarray(z)[::-1]) >= 2.57
+    ) for _, z in results])
+    df = pd.DataFrame(dict(MatchID=match_ids, n_high_z=n_high_z))
+    df = matches_df[['Outcome', 'OwnScore']].join(df, how='right')
+    print(df.corr())
+    return n_high_z
 
 
 def pagerank_centrality(g: Graph):
@@ -103,7 +107,7 @@ metrics: List[Callable] = [
     motifs,
 ]
 
-# TODO| add your post-metrics-computation processing function here,
+# TODO: add your post-metrics-computation processing function here
 # the results of every metric **for all graphs** are passed in as **one** single argument
 # NOTE: the order of results is the same as the order of `match_ids`
 post_metrics: List[Callable] = [
@@ -130,8 +134,8 @@ if __name__ == "__main__":
 
     print('Calculating metrics...')
     # run a single metric
-    # run_metric(graphs, clustering_coefficient, post_clustering_coefficient)
+    run_metric(graphs, motifs, post_motifs)
 
     # or run all metrics
-    for m, pm in zip(metrics, post_metrics):
-        run_metric(graphs, m, pm)
+    # for m, pm in zip(metrics, post_metrics):
+    #     run_metric(graphs, m, pm)

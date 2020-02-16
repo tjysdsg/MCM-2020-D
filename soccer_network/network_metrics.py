@@ -92,10 +92,8 @@ if __name__ == "__main__":
 
     print('Calculating metrics...')
     # run a single metric
-    run_metric(graphs, clustering_coefficient, post_clustering_coefficient)
+    # run_metric(graphs, clustering_coefficient, post_clustering_coefficient)
 
-    """
     # or run all metrics
     for m, pm in zip(metrics, post_metrics):
         run_metric(graphs, m, pm)
-    """

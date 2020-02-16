@@ -2,6 +2,14 @@ from soccer_network.data import *
 from soccer_network.network import Network, ZonedNetwork
 from graph_tool import load_graph
 
+pass_scores_map = {'Head pass': 1.5,
+                   'Simple pass': 1,
+                   'Launch': 1,
+                   'High pass': 1.4,
+                   'Hand pass': 1,
+                   'Smart pass': 2,
+                   'Cross': 1.5}
+
 
 def load_graphml(file: str):
     return load_graph(file)
@@ -20,8 +28,11 @@ def build_network_graphml(match_id: int):
                     for _, r in data.iterrows()
                     if (not pd.isnull(r['OriginPlayerID'])) and (
                         not pd.isnull(r['DestinationPlayerID']))]
+    pass_scores = [pass_scores_map[r['EventSubType']] for _, r in data.iterrows()
+                   if (not pd.isnull(r['OriginPlayerID'])) and (
+                       not pd.isnull(r['DestinationPlayerID']))]
     network.add_players([pi.split('_')[1] for pi in huskies_player_ids])
-    network.add_passes(id_pairs, coords_pairs)
+    network.add_passes(id_pairs, coords_pairs, pass_scores)
     return network
 
 

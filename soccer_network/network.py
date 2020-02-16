@@ -47,11 +47,14 @@ class Network:
             self.player_id_pmap[vs[i]] = pids[i]
         return vs
 
-    def add_passes(self, id_pairs: List[Tuple], coords_pairs: List[Tuple]):
+    def add_passes(self, id_pairs: List[Tuple], coords_pairs: List[Tuple], pass_scores=None):
         pairs = [(self.player_id_to_vertex[i1], self.player_id_to_vertex[i2])
                  for i1, i2 in id_pairs]
         # append player coordinates
         n = len(coords_pairs)
+        if pass_scores is None:
+            pass_scores = [1 for _ in range(n)]
+
         for i in range(n):
             # remember orig and dest location
             # orig player
@@ -77,11 +80,11 @@ class Network:
             # if the edge exists, increment its weight instead of creating a new edge
             e = self.pairs.get(pairs[i])
             if e is not None:
-                self.edge_weights[e] += 1
+                self.edge_weights[e] += pass_scores[i]
             else:
                 e = self.g.add_edge(*pairs[i])
                 self.pairs[pairs[i]] = e
-                self.edge_weights[e] = 0
+                self.edge_weights[e] = pass_scores[i]
 
     def save(self, file: str):
         self.g.save(file, fmt='graphml')

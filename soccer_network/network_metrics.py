@@ -1,7 +1,7 @@
 from soccer_network.data import (match_ids, huskies_player_ids, huskies_events, huskies_passes, matches_df, all_events,
                                  events_df)
 from soccer_network.graphs import load_graphml
-from graph_tool import Graph, clustering, correlations
+from graph_tool import Graph, clustering, correlations, centrality, VertexPropertyMap
 import pandas as pd
 import numpy as np
 from typing import Tuple, List, Callable, Any
@@ -16,16 +16,21 @@ topology
 """
 
 
+def get_mean_std_of_scalar_vertex_properties(vps: List[VertexPropertyMap]):
+    data = [r.get_array() for r in vps]
+    data = np.asarray(data)
+    mean = np.mean(data, axis=1)
+    std = np.std(data, axis=1)
+    return mean, std
+
+
 def clustering_coefficient(g: Graph):
     return clustering.local_clustering(g, weight=g.edge_properties['weight'], undirected=False)
 
 
 def post_clustering_coefficient(results):
-    cc = [r.get_array() for r in results]
-    cc = np.asarray(cc)
-    mean = np.mean(cc, axis=1)
-    std = np.std(cc, axis=1)
-    df = pd.DataFrame(dict(MatchID=match_ids, cc_mean=mean, cc_sigma=std))
+    mean, std = get_mean_std_of_scalar_vertex_properties(results)
+    df = pd.DataFrame(dict(MatchID=match_ids, cc_mean=mean, cc_std=std))
     df = matches_df[['Outcome', 'OwnScore']].join(df, how='right')
     print(df.corr())
     return mean, std
@@ -71,19 +76,37 @@ def post_motifs(results: List[Tuple]):
     return sorted_zs
 
 
+def pagerank_centrality(g: Graph):
+    return centrality.pagerank(g, weight=g.edge_properties['weight'])
+
+
+def post_pagerank_centrality(results):
+    mean, std = get_mean_std_of_scalar_vertex_properties(results)
+    df = pd.DataFrame(dict(MatchID=match_ids, pagerank_mean=mean, pagerank_std=std))
+    df = matches_df[['Outcome', 'OwnScore']].join(df, how='right')
+    print(df.corr())
+    return mean, std
+
+
 # TODO: add your metrics here, the function should have only one required argument and can return anything you like
-metrics = [
+metrics: List[Callable] = [
     passing_volume,
     clustering_coefficient,
-    motifs
+    motifs,
+    assortativity,
+    pagerank_centrality,
 ]
 
 # TODO| add your post-metrics-computation processing function here,
 # the results of every metric **for all graphs** are passed in as **one** single argument
 # NOTE: the order of results is the same as the order of `match_ids`
-post_metrics = [post_passing_volume,
-                post_clustering_coefficient,
-                post_motifs]
+post_metrics: List[Callable] = [
+    post_passing_volume,
+    post_clustering_coefficient,
+    post_motifs,
+    post_assortativity,
+    post_pagerank_centrality,
+]
 
 
 def run_metric(gs: List[Graph], metric: Callable[[Graph], Any], post_metric: Callable):
@@ -100,7 +123,7 @@ if __name__ == "__main__":
 
     print('Calculating metrics...')
     # run a single metric
-    run_metric(graphs, assortativity, post_assortativity)
+    run_metric(graphs, pagerank_centrality, post_pagerank_centrality)
 
     # or run all metrics
     # for m, pm in zip(metrics, post_metrics):

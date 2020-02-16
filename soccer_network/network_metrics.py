@@ -7,8 +7,6 @@ import numpy as np
 from typing import Tuple, List, Callable, Any
 
 """
-centrality
-correlations
 flow
 dynamics
 configuration model
@@ -17,10 +15,14 @@ topology
 
 
 def get_mean_std_of_scalar_vertex_properties(vps: List[VertexPropertyMap]):
-    data = [r.get_array() for r in vps]
+    data = [np.asarray(r.a) for r in vps]
     data = np.asarray(data)
-    mean = np.mean(data, axis=1)
-    std = np.std(data, axis=1)
+    if len(data.shape) != 2:  # the length each row in `data` is not the same, must use loop
+        mean = np.asarray([np.mean(d) for d in data])
+        std = np.asarray([np.std(d) for d in data])
+    else:
+        mean = np.mean(data, axis=1)
+        std = np.std(data, axis=1)
     return mean, std
 
 
@@ -46,7 +48,7 @@ def post_passing_volume(results: Tuple):
     # from matplotlib import pyplot as plt
     mean, sigma = zip(
         *results)  # https://stackoverflow.com/questions/13635032/what-is-the-inverse-function-of-zip-in-python
-    df = pd.DataFrame(dict(MatchID=match_ids, pv_mean=mean, pv_sigma=sigma))
+    df = pd.DataFrame(dict(MatchID=match_ids, pv_mean=mean, pv_std=sigma))
     df = matches_df[['Outcome', 'OwnScore']].join(df, how='right')
     print(df.corr())
 
@@ -67,12 +69,8 @@ def motifs(g: Graph, k: int = 3):
 
 
 def post_motifs(results: List[Tuple]):
-    sorted_zs = []
-    for mn, z in results:
-        z = np.asarray(z)
-        z[::-1].sort()
-        sorted_zs.append(z)
-    print(sorted_zs)
+    sorted_zs = [np.asarray(z)[::-1] for _, z in results]
+    print(np.mean(sorted_zs, axis=1))
     return sorted_zs
 
 
@@ -88,13 +86,26 @@ def post_pagerank_centrality(results):
     return mean, std
 
 
+def closeness_centrality(g: Graph):
+    return centrality.closeness(g, weight=g.edge_properties['weight'])
+
+
+def post_closeness_centrality(results):
+    mean, std = get_mean_std_of_scalar_vertex_properties(results)
+    df = pd.DataFrame(dict(MatchID=match_ids, closeness_mean=mean, closeness_std=std))
+    df = matches_df[['Outcome', 'OwnScore']].join(df, how='right')
+    print(df.corr())
+    return mean, std
+
+
 # TODO: add your metrics here, the function should have only one required argument and can return anything you like
 metrics: List[Callable] = [
     passing_volume,
     clustering_coefficient,
-    motifs,
     assortativity,
     pagerank_centrality,
+    closeness_centrality,
+    motifs,
 ]
 
 # TODO| add your post-metrics-computation processing function here,
@@ -103,9 +114,10 @@ metrics: List[Callable] = [
 post_metrics: List[Callable] = [
     post_passing_volume,
     post_clustering_coefficient,
-    post_motifs,
     post_assortativity,
     post_pagerank_centrality,
+    post_closeness_centrality,
+    post_motifs,
 ]
 
 
@@ -123,7 +135,7 @@ if __name__ == "__main__":
 
     print('Calculating metrics...')
     # run a single metric
-    run_metric(graphs, pagerank_centrality, post_pagerank_centrality)
+    run_metric(graphs, clustering_coefficient, post_clustering_coefficient)
 
     # or run all metrics
     # for m, pm in zip(metrics, post_metrics):

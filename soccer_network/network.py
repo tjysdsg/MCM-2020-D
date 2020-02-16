@@ -86,10 +86,21 @@ class Network:
                 self.pairs[pairs[i]] = e
                 self.edge_weights[e] = pass_scores[i]
 
+    def cleanup(self):
+        """remove isolated vertices"""
+        to_remove = []
+        for v in self.g.vertices():
+            if v.in_degree() + v.out_degree() == 0:
+                to_remove.append(v)
+        n = len(to_remove)
+        self.g.remove_vertex(to_remove, fast=True)
+        print("Removed {0} isolated vertices".format(n))
+
     def save(self, file: str):
         self.g.save(file, fmt='graphml')
 
 
+# TODO: update this to behave like `Network` above
 class ZonedNetwork:
     def __init__(self, size: Tuple[int] = (10, 10), field_size: Tuple[int] = (100, 100)):
         self.g = Graph(directed=True)

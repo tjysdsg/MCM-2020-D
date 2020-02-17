@@ -131,6 +131,14 @@ def plot_act_lvls(data, axs, label: str):
     axs[1][1].set_title('Foul')
 
 
+def activity_index(data):
+    data[:, -1] = -data[:, -1]
+    return -np.sum(
+        np.divide(1, data, out=np.zeros_like(data), where=data != 0),
+        axis=1)
+    # return np.sum(data, axis=1)
+
+
 if __name__ == '__main__':
     # FIXME is the first half really 45 min?
     all_events.loc[all_events['MatchPeriod'] == '2H', 'EventTime'] += 45 * 60  # add 45 minutes
@@ -143,6 +151,10 @@ if __name__ == '__main__':
         df_dict['huskies_std_' + types[i]] = []
         df_dict['oppo_mean_' + types[i]] = []
         df_dict['oppo_std_' + types[i]] = []
+        df_dict['huskies_activity_index_mean'] = []
+        df_dict['huskies_activity_index_std'] = []
+        df_dict['oppo_activity_index_mean'] = []
+        df_dict['oppo_activity_index_std'] = []
 
     for mi in match_ids:
         oppo_team_id = matches_df[matches_df['MatchID'] == mi]['OpponentID'].to_list()[0]
@@ -157,6 +169,26 @@ if __name__ == '__main__':
         else:
             oppo_act_lvls = np.pad(oppo_act_lvls, ((0, huskies_len - oppo_len), (0, 0)), 'constant')
 
+        df_dict['outcome'].append(outcome)
+
+        for i in range(4):
+            df_dict['huskies_mean_' + types[i]].append(np.mean(huskies_act_lvls[:, i]))
+            df_dict['huskies_std_' + types[i]].append(np.std(huskies_act_lvls[:, i]))
+            df_dict['oppo_mean_' + types[i]].append(np.mean(oppo_act_lvls[:, i]))
+            df_dict['oppo_std_' + types[i]].append(np.std(oppo_act_lvls[:, i]))
+        df_dict['huskies_activity_index_mean'].append(np.mean(activity_index(huskies_act_lvls)))
+        df_dict['huskies_activity_index_std'].append(np.std(activity_index(huskies_act_lvls)))
+        df_dict['oppo_activity_index_mean'].append(np.mean(activity_index(oppo_act_lvls)))
+        df_dict['oppo_activity_index_std'].append(np.std(activity_index(oppo_act_lvls)))
+
+    df = pd.DataFrame(df_dict)
+    pd.set_option('display.max_rows', None)
+    pd.set_option('display.max_columns', None)
+    pd.set_option('display.width', None)
+    pd.set_option('display.max_colwidth', -1)
+    print(df.corr(method='spearman'))
+
+"""
         # plot
         fig, axs = plt.subplots(2, 2)
         plot_act_lvls(huskies_act_lvls, axs, 'Huskies')
@@ -172,25 +204,10 @@ if __name__ == '__main__':
         plt.clf()
         plt.cla()
         plt.close()
-
-"""
-        df_dict['outcome'].append(outcome)
-
-        for i in range(4):
-            df_dict['huskies_mean_' + types[i]].append(np.mean(huskies_act_lvls[:, i]))
-            df_dict['huskies_std_' + types[i]].append(np.std(huskies_act_lvls[:, i]))
-            df_dict['oppo_mean_' + types[i]].append(np.mean(oppo_act_lvls[:, i]))
-            df_dict['oppo_std_' + types[i]].append(np.std(oppo_act_lvls[:, i]))
-
-    df = pd.DataFrame(df_dict)
-    pd.set_option('display.max_rows', None)
-    pd.set_option('display.max_columns', None)
-    pd.set_option('display.width', None)
-    pd.set_option('display.max_colwidth', -1)
-    print(df.corr())
 """
 
 """
+        # activity index
         huskies_act_lvls[:, -1] = -huskies_act_lvls[:, -1]
         huskies_combined_act = -np.sum(
             np.divide(1, huskies_act_lvls, out=np.zeros_like(huskies_act_lvls), where=huskies_act_lvls != 0),

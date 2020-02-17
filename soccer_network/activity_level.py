@@ -131,24 +131,68 @@ def plot_act_lvls(data, axs, label: str):
     axs[1][1].set_title('Foul')
 
 
-def get_corr(**kwargs):
-    kwargs.update({'MatchID': match_ids})
-    df = pd.DataFrame(kwargs).set_index('MatchID')
-    df = df.join(matches_df[['Outcome', 'OwnScore']], how='left')
-    df['ScoreDiff'] = matches_df['Outcome'] - matches_df['OwnScore']
-    return df.corr()
-
-
 if __name__ == '__main__':
     # FIXME is the first half really 45 min?
     all_events.loc[all_events['MatchPeriod'] == '2H', 'EventTime'] += 45 * 60  # add 45 minutes
     all_events.sort_values('EventTime', inplace=True)
+
+    df_dict = {'outcome': []}
+    types = ['attack', 'defense', 'collaborate', 'foul']
+    for i in range(4):
+        df_dict['huskies_mean_' + types[i]] = []
+        df_dict['huskies_std_' + types[i]] = []
+        df_dict['oppo_mean_' + types[i]] = []
+        df_dict['oppo_std_' + types[i]] = []
+
     for mi in match_ids:
         oppo_team_id = matches_df[matches_df['MatchID'] == mi]['OpponentID'].to_list()[0]
         outcome = matches_df[matches_df['MatchID'] == mi]['Outcome'].to_list()[0]
         huskies_act_lvls = player_activity_levels(all_events, mi, player_id=None, team_id='Huskies')
         oppo_act_lvls = player_activity_levels(all_events, mi, player_id=None, team_id=oppo_team_id)
 
+        df_dict['outcome'].append(outcome)
+
+        for i in range(4):
+            df_dict['huskies_mean_' + types[i]].append(np.mean(huskies_act_lvls[:, i]))
+            df_dict['huskies_std_' + types[i]].append(np.std(huskies_act_lvls[:, i]))
+            df_dict['oppo_mean_' + types[i]].append(np.mean(oppo_act_lvls[:, i]))
+            df_dict['oppo_std_' + types[i]].append(np.std(oppo_act_lvls[:, i]))
+
+    df = pd.DataFrame(df_dict)
+    pd.set_option('display.max_rows', None)
+    pd.set_option('display.max_columns', None)
+    pd.set_option('display.width', None)
+    pd.set_option('display.max_colwidth', -1)
+    print(df.corr())
+
+"""
+        huskies_act_lvls[:, -1] = -huskies_act_lvls[:, -1]
+        huskies_combined_act = -np.sum(
+            np.divide(1, huskies_act_lvls, out=np.zeros_like(huskies_act_lvls), where=huskies_act_lvls != 0),
+            axis=1)
+        oppo_act_lvls[:, -1] = -oppo_act_lvls[:, -1]
+        oppo_combined_act = -np.sum(
+            np.divide(1, oppo_act_lvls, out=np.zeros_like(oppo_act_lvls), where=oppo_act_lvls != 0),
+            axis=1)
+
+        x1 = range(huskies_combined_act.shape[0])
+        plt.plot(x1, huskies_combined_act, label='huskies')
+        x2 = range(oppo_combined_act.shape[0])
+        plt.plot(x2, oppo_combined_act, label=oppo_team_id)
+
+        # configure figures
+        fig_name = "match-{}-huskies-vs-{}-outcome-{}".format(mi, oppo_team_id, outcome)
+        plt.title(fig_name)
+        plt.legend()
+        # save and close
+        # plt.show()
+        plt.savefig('../images/activity_index/' + fig_name)
+        plt.clf()
+        plt.cla()
+        plt.close()
+"""
+
+"""
         # plot
         fig, axs = plt.subplots(2, 2)
         plot_act_lvls(huskies_act_lvls, axs, 'Huskies')
@@ -164,3 +208,4 @@ if __name__ == '__main__':
         plt.clf()
         plt.cla()
         plt.close()
+"""

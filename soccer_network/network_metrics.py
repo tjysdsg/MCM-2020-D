@@ -21,8 +21,8 @@ def get_corr(**kwargs):
     return df.corr()
 
 
-def get_mean_std_of_scalar_vertex_properties(vps: List[VertexPropertyMap]):
-    data = [np.asarray(r.a) for r in vps]
+def get_mean_std_of_scalar_vertex_properties(vpms: List[VertexPropertyMap]):
+    data = [np.asarray(r.a) for r in vpms]
     data = np.asarray(data)
     if len(data.shape) != 2:  # the length each row in `data` is not the same, must use loop
         mean = np.asarray([np.mean(d) for d in data])
@@ -50,7 +50,6 @@ def passing_volume(g: Graph):
 
 
 def post_passing_volume(results: Tuple):
-    # from matplotlib import pyplot as plt
     mean, std = zip(
         *results)  # https://stackoverflow.com/questions/13635032/what-is-the-inverse-function-of-zip-in-python
     print(get_corr(mean=mean, std=std))
@@ -89,9 +88,16 @@ def betweenness_centrality(g: Graph):
     return centrality.betweenness(g, weight=g.edge_properties['weight'])[0]
 
 
+def post_beweenness_centrality(results: List[VertexPropertyMap]):
+    mean, std = get_mean_std_of_scalar_vertex_properties(results)
+    # central point dominance
+    cpd = [centrality.central_point_dominance(vpm.get_graph(), vpm) for vpm in results]
+    print(get_corr(mean=mean, std=std, cpd=cpd))
+    return mean, std, cpd
+
+
 post_pagerank_centrality = \
     post_closeness_centrality = \
-    post_beweenness_centrality = \
     post_clustering_coefficient = \
     post_results_as_vertex_properties
 

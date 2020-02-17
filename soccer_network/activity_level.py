@@ -4,24 +4,9 @@ from typing import Tuple, List
 import pandas as pd
 import numpy as np
 
-"""
-See also data.md
-- Subtype of Duel: ['Air duel', 'Ground attacking duel', 'Ground defending duel', 'Ground loose ball duel']
-'Foul': ['Foul', 'Hand foul', 'Late card foul', 'Out of game foul', 'Protest', 'Simulation', 'Time lost foul', 'Violent Foul']
-'Free Kick': ['Corner', 'Free Kick', 'Free kick cross', 'Free kick shot', 'Goal kick', 'Penalty', 'Throw in']
-'Goalkeeper leaving line': ['Goalkeeper leaving line']
-'Interruption': ['Ball out of the field', 'Whistle']
-'Offside': [nan]
-'Others on the ball': ['Acceleration', 'Clearance', 'Touch']
-'Pass': ['Cross', 'Hand pass', 'Head pass', 'High pass', 'Launch', 'Simple pass', 'Smart pass']
-'Save attempt': ['Reflexes', 'Save attempt']
-'Shot': ['Shot']
-'Substitution': ['Substitution']
-"""
-
 # (attack, defense, collaborate, foul)
 activity_scores = {
-    'Duel': {'Air duel': (.2, 0, 0, 0),
+    'Duel': {'Air duel': (0, 1.0, 0, 0),
              'Ground attacking duel': (.15, 0, 0, 0),
              'Ground defending duel': (0, .15, 0, 0),
              'Ground loose ball duel': (.1, 0, 0, 0)
@@ -131,34 +116,21 @@ def plot_act_lvls(data, axs, label: str):
     axs[1][1].set_title('Foul')
 
 
-def activity_index(data):
-    data[:, -1] = -data[:, -1]
-    return -np.sum(
-        np.divide(1, data, out=np.zeros_like(data), where=data != 0),
-        axis=1)
-    # return np.sum(data, axis=1)
-
-
-if __name__ == '__main__':
+def get_activity_level():
     # FIXME is the first half really 45 min?
     all_events.loc[all_events['MatchPeriod'] == '2H', 'EventTime'] += 45 * 60  # add 45 minutes
     all_events.sort_values('EventTime', inplace=True)
 
-    df_dict = {'outcome': []}
     types = ['attack', 'defense', 'collaborate', 'foul']
+    df_dict = {'MatchID': match_ids}
     for i in range(4):
         df_dict['huskies_mean_' + types[i]] = []
         df_dict['huskies_std_' + types[i]] = []
         df_dict['oppo_mean_' + types[i]] = []
         df_dict['oppo_std_' + types[i]] = []
-        df_dict['huskies_activity_index_mean'] = []
-        df_dict['huskies_activity_index_std'] = []
-        df_dict['oppo_activity_index_mean'] = []
-        df_dict['oppo_activity_index_std'] = []
 
     for mi in match_ids:
         oppo_team_id = matches_df[matches_df['MatchID'] == mi]['OpponentID'].to_list()[0]
-        outcome = matches_df[matches_df['MatchID'] == mi]['Outcome'].to_list()[0]
         huskies_act_lvls = player_activity_levels(all_events, mi, player_id=None, team_id='Huskies')
         oppo_act_lvls = player_activity_levels(all_events, mi, player_id=None, team_id=oppo_team_id)
 
@@ -169,25 +141,25 @@ if __name__ == '__main__':
         else:
             oppo_act_lvls = np.pad(oppo_act_lvls, ((0, huskies_len - oppo_len), (0, 0)), 'constant')
 
-        df_dict['outcome'].append(outcome)
-
         for i in range(4):
             df_dict['huskies_mean_' + types[i]].append(np.mean(huskies_act_lvls[:, i]))
             df_dict['huskies_std_' + types[i]].append(np.std(huskies_act_lvls[:, i]))
             df_dict['oppo_mean_' + types[i]].append(np.mean(oppo_act_lvls[:, i]))
             df_dict['oppo_std_' + types[i]].append(np.std(oppo_act_lvls[:, i]))
-        df_dict['huskies_activity_index_mean'].append(np.mean(activity_index(huskies_act_lvls)))
-        df_dict['huskies_activity_index_std'].append(np.std(activity_index(huskies_act_lvls)))
-        df_dict['oppo_activity_index_mean'].append(np.mean(activity_index(oppo_act_lvls)))
-        df_dict['oppo_activity_index_std'].append(np.std(activity_index(oppo_act_lvls)))
 
     df = pd.DataFrame(df_dict)
-    pd.set_option('display.max_rows', None)
-    pd.set_option('display.max_columns', None)
-    pd.set_option('display.width', None)
-    pd.set_option('display.max_colwidth', -1)
-    print(df.corr(method='spearman'))
+    df.set_index('MatchID', inplace=True)
+    # pd.set_option('display.max_rows', None)
+    # pd.set_option('display.max_columns', None)
+    # pd.set_option('display.width', None)
+    # pd.set_option('display.max_colwidth', -1)
+    # print(df.corr(method='spearman'))
 
+    return df
+
+
+if __name__ == '__main__':
+    get_activity_level()
 """
         # plot
         fig, axs = plt.subplots(2, 2)

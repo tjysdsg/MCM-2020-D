@@ -5,11 +5,6 @@ import pandas as pd
 import numpy as np
 from typing import Tuple, List, Callable, Any
 
-"""
-dynamics
-configuration model
-"""
-
 
 def get_corr(**kwargs):
     kwargs.update({'MatchID': match_ids})

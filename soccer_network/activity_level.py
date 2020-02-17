@@ -82,29 +82,34 @@ def get_activity_scores(etype: str, esubtype: str) -> Tuple[float, float, float,
 def player_activity_levels(time_series_data: pd.DataFrame,
                            match_id: int or None,
                            player_id: str or None,
+                           team_id: str = 'Huskies',
                            interval_seconds: float = 60.0) -> np.ndarray or None:
     """Calculate the activity levels of a player in a series of time interval"""
     timer = 0
-    activity_scores = np.zeros(4, dtype=float)
+    curr_act_lvl = np.zeros(4, dtype=float)
     act_lvls = []
     pcond = True if player_id is None else time_series_data['OriginPlayerID'] == player_id
     mcond = True if match_id is None else time_series_data['MatchID'] == match_id
-    player_data = time_series_data[pcond & mcond]
-    if len(player_data) == 0:
+    data = time_series_data[pcond & mcond &
+                            (time_series_data['TeamID'] == team_id)]
+    if len(data) == 0:
         print("Warning: no data for player #{0} in match #{1}".format(player_id, match_id))
         return None
-    player_time = player_data['EventTime'].to_numpy()
-    etypes = player_data['EventType']
-    esubtypes = player_data['EventSubType']
-    for i in range(player_data.shape[0] - 1):
+    player_time = data['EventTime'].to_numpy()
+    etypes = data['EventType']
+    esubtypes = data['EventSubType']
+    for i in range(data.shape[0] - 1):
+        # TODO: special cases
+        # passing failed
+        # duel failed
         interval = player_time[i + 1] - player_time[i]
         timer += interval
         if timer > interval_seconds:  # if reached 1 min, calc and append new data, reset timer
-            act_lvls.append(activity_scores.copy())
+            act_lvls.append(curr_act_lvl.copy())
             timer = interval
-            activity_scores.fill(0)
+            curr_act_lvl.fill(0)
         else:  # otherwise store data and increment timer
-            activity_scores += np.asarray(get_activity_scores(etypes.iloc[i], esubtypes.iloc[i]))
+            curr_act_lvl += np.asarray(get_activity_scores(etypes.iloc[i], esubtypes.iloc[i]))
             timer += interval
     return np.asarray(act_lvls)
 
@@ -129,8 +134,11 @@ def plot_act_lvls(data, fig_name: str):
     fig.suptitle(fig_name)
     fig.subplots_adjust(top=0.9)
     fig.tight_layout()
-    # fig.savefig(fig_name)
-    plt.show()
+    fig.savefig('../images/activity_levels/' + fig_name)
+    # plt.show()
+    plt.clf()
+    plt.cla()
+    plt.close()
 
 
 def get_corr(**kwargs):
@@ -145,12 +153,10 @@ if __name__ == '__main__':
     # FIXME is the first half really 45 min?
     all_events.loc[all_events['MatchPeriod'] == '2H', 'EventTime'] += 45 * 60  # add 45 minutes
     all_events.sort_values('EventTime', inplace=True)
-    for mi in match_ids:
-        match_act_lvls = {mi: player_activity_levels(all_events, mi, player_id=None) for mi in match_ids}
-        plot_act_lvls(match_act_lvls[mi], 'match #{}'.format(mi))
-    # data = np.asarray(
-    #     [
-    #         [player_activity_levels(all_events, mi, pid) for pid in huskies_player_ids]
-    #         for mi in match_ids
-    #     ]
-    # )
+    for team_n in range(1, 20):
+        team_id = 'Opponent{}'.format(team_n)
+        for mi in match_ids:
+            match_act_lvls = {mi: player_activity_levels(all_events, mi, player_id=None, team_id=team_id) for mi in
+                              match_ids}
+            if match_act_lvls[mi] is not None:
+                plot_act_lvls(match_act_lvls[mi], 'match#{}-team#{}'.format(mi, team_id))

@@ -1,35 +1,16 @@
 from soccer_network.data import (match_ids, matches_df)
 from soccer_network.graphs import load_graphml
 from graph_tool import Graph, clustering, correlations, centrality, VertexPropertyMap
-import pandas as pd
 import numpy as np
 from typing import Tuple, List, Callable, Any
 
 
-def get_corr(**kwargs):
-    kwargs.update({'MatchID': match_ids})
-    df = pd.DataFrame(kwargs).set_index('MatchID')
-    df = df.join(matches_df[['Outcome', 'OwnScore']], how='left')
-    df['ScoreDiff'] = matches_df['Outcome'] - matches_df['OwnScore']
-    return df.corr()
-
-
-def get_mean_std_of_scalar_vertex_properties(vpms: List[VertexPropertyMap]):
-    data = [np.asarray(r.a) for r in vpms]
-    data = np.asarray(data)
-    if len(data.shape) != 2:  # the length each row in `data` is not the same, must use loop
-        mean = np.asarray([np.mean(d) for d in data])
-        std = np.asarray([np.std(d) for d in data])
-    else:
-        mean = np.mean(data, axis=1)
-        std = np.std(data, axis=1)
-    return mean, std
+# def post_results_as_vertex_properties2d(results: List[VertexPropertyMap]):
+#     return [np.asarray(r.get_2d_array(r.get_graph().get_vertices())).flatten() for r in results]
 
 
 def post_results_as_vertex_properties(results: List[VertexPropertyMap]):
-    mean, std = get_mean_std_of_scalar_vertex_properties(results)
-    print(get_corr(mean=mean, std=std))
-    return mean, std
+    return [np.asarray(r.a) for r in results]
 
 
 def clustering_coefficient(g: Graph):
@@ -38,14 +19,11 @@ def clustering_coefficient(g: Graph):
 
 def passing_volume(g: Graph):
     vs = g.get_vertices()
-    total = g.get_total_degrees(vs, g.edge_properties['weight'])
-    return np.mean(total), np.std(total)
+    return np.asarray(g.get_total_degrees(vs, g.edge_properties['weight']))
 
 
-def post_passing_volume(results: Tuple):
-    mean, std = zip(
-        *results)  # https://stackoverflow.com/questions/13635032/what-is-the-inverse-function-of-zip-in-python
-    print(get_corr(mean=mean, std=std))
+def post_passing_volume(results):
+    return results
 
 
 def assortativity(g: Graph):
@@ -54,7 +32,7 @@ def assortativity(g: Graph):
 
 def post_assortativity(results):
     mean, variance = zip(*results)
-    print(get_corr(mean=mean, var=variance))
+    return mean + variance  # list concat
 
 
 def motifs(g: Graph, k: int = 3):
@@ -62,11 +40,7 @@ def motifs(g: Graph, k: int = 3):
 
 
 def post_motifs(results: List[Tuple]):
-    n_high_z = np.asarray([np.count_nonzero(
-        np.abs(np.asarray(z)[::-1]) >= 2.57
-    ) for _, z in results])
-    print(get_corr(n_high_z=n_high_z))
-    return n_high_z
+    return [np.asarray(z)[np.abs(np.asarray(z)[::-1]) >= 2.57] for _, z in results]
 
 
 def pagerank_centrality(g: Graph):
@@ -81,20 +55,8 @@ def betweenness_centrality(g: Graph):
     return centrality.betweenness(g, weight=g.edge_properties['weight'])[0]
 
 
-def post_beweenness_centrality(results: List[VertexPropertyMap]):
-    mean, std = get_mean_std_of_scalar_vertex_properties(results)
-    # central point dominance
-    cpd = [centrality.central_point_dominance(vpm.get_graph(), vpm) for vpm in results]
-    print(get_corr(mean=mean, std=std, cpd=cpd))
-    return mean, std, cpd
-
-
 def eigenvector_centrality(g: Graph):
-    return centrality.eigenvector(g, g.edge_properties['weight'])[0]
-
-
-def post_eigenvector_centrality(results: List[float]):
-    print(get_corr(eigenvalue=results))
+    return centrality.eigenvector(g, g.edge_properties['weight'])[1]
 
 
 def katz_centrality(g: Graph):
@@ -102,59 +64,54 @@ def katz_centrality(g: Graph):
 
 
 def authority_hub_centrality(g: Graph):
-    return centrality.hits(g, weight=g.edge_properties['weight'])
+    return centrality.hits(g, weight=g.edge_properties['weight'])[1:]
 
 
 def post_authority_hub_centrality(results):
-    eig, authority, hub = zip(*results)
-    auth_mean, auth_std = get_mean_std_of_scalar_vertex_properties(authority)
-    hub_mean, hub_std = get_mean_std_of_scalar_vertex_properties(hub)
-    print(get_corr(auth_mean=auth_mean, auth_std=auth_std, hub_mean=hub_mean, hub_std=hub_std, eigenvalue=eig))
+    authority, hub = zip(*results)
+    return post_results_as_vertex_properties(authority), post_results_as_vertex_properties(hub)
 
 
 post_pagerank_centrality = \
+    post_eigenvector_centrality = \
+    post_beweenness_centrality = \
     post_closeness_centrality = \
     post_clustering_coefficient = \
     post_katz_centrality = \
     post_results_as_vertex_properties
 
-# TODO: add your metrics here, the function should have only one required argument and can return anything you like
 metrics: List[Callable] = [
     passing_volume,
     clustering_coefficient,
-    assortativity,
+    # assortativity,
     pagerank_centrality,
     closeness_centrality,
     betweenness_centrality,
     eigenvector_centrality,
     katz_centrality,
-    authority_hub_centrality,
-    motifs,
+    # authority_hub_centrality,
+    # motifs,
 ]
 
-# TODO: add your post-metrics-computation processing function here
 # the results of every metric **for all graphs** are passed in as **one** single argument
 # NOTE: the order of results is the same as the order of `match_ids`
 post_metrics: List[Callable] = [
     post_passing_volume,
     post_clustering_coefficient,
-    post_assortativity,
+    # post_assortativity,
     post_pagerank_centrality,
     post_closeness_centrality,
     post_beweenness_centrality,
     post_eigenvector_centrality,
     post_katz_centrality,
-    post_authority_hub_centrality,
-    post_motifs,
+    # post_authority_hub_centrality,
+    # post_motifs,
 ]
 
 
-def run_metric(gs: List[Graph], metric: Callable[[Graph], Any], post_metric: Callable):
-    print('=' * 25)
-    print('\tRunning {0}'.format(metric.__name__))
-    print('=' * 25)
+def run_metric(gs: List[Graph], metric: Callable[[Graph], Any], post_metric: Callable) -> List[np.ndarray]:
     results = [metric(g) for g in gs]
-    post_metric(results)
+    return post_metric(results)
 
 
 if __name__ == "__main__":

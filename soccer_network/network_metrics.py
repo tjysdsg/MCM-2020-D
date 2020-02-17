@@ -1,5 +1,4 @@
-from soccer_network.data import (match_ids, huskies_player_ids, huskies_events, huskies_passes, matches_df, all_events,
-                                 events_df)
+from soccer_network.data import (match_ids, matches_df)
 from soccer_network.graphs import load_graphml
 from graph_tool import Graph, clustering, correlations, centrality, VertexPropertyMap
 import pandas as pd
@@ -12,6 +11,14 @@ dynamics
 configuration model
 topology
 """
+
+
+def get_corr(**kwargs):
+    kwargs.update({'MatchID': match_ids})
+    df = pd.DataFrame(kwargs).set_index('MatchID')
+    df = df.join(matches_df[['Outcome', 'OwnScore']], how='left')
+    df['ScoreDiff'] = matches_df['Outcome'] - matches_df['OwnScore']
+    return df.corr()
 
 
 def get_mean_std_of_scalar_vertex_properties(vps: List[VertexPropertyMap]):
@@ -28,9 +35,7 @@ def get_mean_std_of_scalar_vertex_properties(vps: List[VertexPropertyMap]):
 
 def post_results_as_vertex_properties(results: List[VertexPropertyMap]):
     mean, std = get_mean_std_of_scalar_vertex_properties(results)
-    df = pd.DataFrame(dict(MatchID=match_ids, mean=mean, std=std))
-    df = matches_df[['Outcome', 'OwnScore']].join(df, how='right')
-    print(df.corr())
+    print(get_corr(mean=mean, std=std))
     return mean, std
 
 
@@ -46,11 +51,9 @@ def passing_volume(g: Graph):
 
 def post_passing_volume(results: Tuple):
     # from matplotlib import pyplot as plt
-    mean, sigma = zip(
+    mean, std = zip(
         *results)  # https://stackoverflow.com/questions/13635032/what-is-the-inverse-function-of-zip-in-python
-    df = pd.DataFrame(dict(MatchID=match_ids, pv_mean=mean, pv_std=sigma))
-    df = matches_df[['Outcome', 'OwnScore']].join(df, how='right')
-    print(df.corr())
+    print(get_corr(mean=mean, std=std))
 
 
 def assortativity(g: Graph):
@@ -59,9 +62,7 @@ def assortativity(g: Graph):
 
 def post_assortativity(results):
     mean, variance = zip(*results)
-    df = pd.DataFrame(dict(MatchID=match_ids, assort_mean=mean, assort_var=variance))
-    df = matches_df[['Outcome', 'OwnScore']].join(df, how='right')
-    print(df.corr())
+    print(get_corr(mean=mean, var=variance))
 
 
 def motifs(g: Graph, k: int = 3):
@@ -72,9 +73,7 @@ def post_motifs(results: List[Tuple]):
     n_high_z = np.asarray([np.count_nonzero(
         np.abs(np.asarray(z)[::-1]) >= 2.57
     ) for _, z in results])
-    df = pd.DataFrame(dict(MatchID=match_ids, n_high_z=n_high_z))
-    df = matches_df[['Outcome', 'OwnScore']].join(df, how='right')
-    print(df.corr())
+    print(get_corr(n_high_z=n_high_z))
     return n_high_z
 
 
@@ -122,7 +121,9 @@ post_metrics: List[Callable] = [
 
 
 def run_metric(gs: List[Graph], metric: Callable[[Graph], Any], post_metric: Callable):
-    print('Running {0}'.format(metric.__name__))
+    print('=' * 25)
+    print('\tRunning {0}'.format(metric.__name__))
+    print('=' * 25)
     results = [metric(g) for g in gs]
     post_metric(results)
 
@@ -134,8 +135,8 @@ if __name__ == "__main__":
 
     print('Calculating metrics...')
     # run a single metric
-    run_metric(graphs, motifs, post_motifs)
+    # run_metric(graphs, motifs, post_motifs)
 
     # or run all metrics
-    # for m, pm in zip(metrics, post_metrics):
-    #     run_metric(graphs, m, pm)
+    for m, pm in zip(metrics, post_metrics):
+        run_metric(graphs, m, pm)

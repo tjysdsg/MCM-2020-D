@@ -104,9 +104,14 @@ def post_eigenvector_centrality(results: List[float]):
     print(get_corr(eigenvalue=results))
 
 
+def katz_centrality(g: Graph):
+    return centrality.katz(g, weight=g.edge_properties['weight'])
+
+
 post_pagerank_centrality = \
     post_closeness_centrality = \
     post_clustering_coefficient = \
+    post_katz_centrality = \
     post_results_as_vertex_properties
 
 # TODO: add your metrics here, the function should have only one required argument and can return anything you like
@@ -118,6 +123,7 @@ metrics: List[Callable] = [
     closeness_centrality,
     betweenness_centrality,
     eigenvector_centrality,
+    katz_centrality,
     motifs,
 ]
 
@@ -132,6 +138,7 @@ post_metrics: List[Callable] = [
     post_closeness_centrality,
     post_beweenness_centrality,
     post_eigenvector_centrality,
+    post_katz_centrality,
     post_motifs,
 ]
 

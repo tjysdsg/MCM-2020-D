@@ -150,6 +150,30 @@ if __name__ == '__main__':
         huskies_act_lvls = player_activity_levels(all_events, mi, player_id=None, team_id='Huskies')
         oppo_act_lvls = player_activity_levels(all_events, mi, player_id=None, team_id=oppo_team_id)
 
+        oppo_len = oppo_act_lvls.shape[0]
+        huskies_len = huskies_act_lvls.shape[0]
+        if huskies_len < oppo_len:
+            huskies_act_lvls = np.pad(huskies_act_lvls, ((0, oppo_len - huskies_len), (0, 0)), 'constant')
+        else:
+            oppo_act_lvls = np.pad(oppo_act_lvls, ((0, huskies_len - oppo_len), (0, 0)), 'constant')
+
+        # plot
+        fig, axs = plt.subplots(2, 2)
+        plot_act_lvls(huskies_act_lvls, axs, 'Huskies')
+        plot_act_lvls(oppo_act_lvls, axs, oppo_team_id)
+        # configure figures
+        fig_name = "match-{}-huskies-vs-{}-outcome-{}".format(mi, oppo_team_id, outcome)
+        fig.suptitle(fig_name)
+        fig.subplots_adjust(top=0.8)
+        fig.tight_layout()
+        plt.legend()
+        # save and close
+        fig.savefig('../images/activity_levels/' + fig_name)
+        plt.clf()
+        plt.cla()
+        plt.close()
+
+"""
         df_dict['outcome'].append(outcome)
 
         for i in range(4):
@@ -164,6 +188,7 @@ if __name__ == '__main__':
     pd.set_option('display.width', None)
     pd.set_option('display.max_colwidth', -1)
     print(df.corr())
+"""
 
 """
         huskies_act_lvls[:, -1] = -huskies_act_lvls[:, -1]
@@ -187,24 +212,6 @@ if __name__ == '__main__':
         # save and close
         # plt.show()
         plt.savefig('../images/activity_index/' + fig_name)
-        plt.clf()
-        plt.cla()
-        plt.close()
-"""
-
-"""
-        # plot
-        fig, axs = plt.subplots(2, 2)
-        plot_act_lvls(huskies_act_lvls, axs, 'Huskies')
-        plot_act_lvls(oppo_act_lvls, axs, oppo_team_id)
-        # configure figures
-        fig_name = "match-{}-huskies-vs-{}-outcome-{}".format(mi, oppo_team_id, outcome)
-        fig.suptitle(fig_name)
-        fig.subplots_adjust(top=0.8)
-        fig.tight_layout()
-        plt.legend()
-        # save and close
-        fig.savefig('../images/activity_levels/' + fig_name)
         plt.clf()
         plt.cla()
         plt.close()

@@ -80,20 +80,19 @@ def get_activity_scores(etype: str, esubtype: str) -> Tuple[float, float, float,
 
 
 def player_activity_levels(time_series_data: pd.DataFrame,
-                           match_id: int,
-                           player_id: str,
-                           interval_seconds: float = 60.0) -> np.ndarray:
+                           match_id: int or None,
+                           player_id: str or None,
+                           interval_seconds: float = 60.0) -> np.ndarray or None:
     """Calculate the activity levels of a player in a series of time interval"""
     timer = 0
     activity_scores = np.zeros(4, dtype=float)
     act_lvls = []
-    player_data = time_series_data[
-        (time_series_data['OriginPlayerID'] == player_id) &
-        (time_series_data['MatchID'] == match_id)
-        ]
+    pcond = True if player_id is None else time_series_data['OriginPlayerID'] == player_id
+    mcond = True if match_id is None else time_series_data['MatchID'] == match_id
+    player_data = time_series_data[pcond & mcond]
     if len(player_data) == 0:
         print("Warning: no data for player #{0} in match #{1}".format(player_id, match_id))
-        return np.zeros((1, 4))
+        return None
     player_time = player_data['EventTime'].to_numpy()
     etypes = player_data['EventType']
     esubtypes = player_data['EventSubType']
@@ -110,26 +109,27 @@ def player_activity_levels(time_series_data: pd.DataFrame,
     return np.asarray(act_lvls)
 
 
-def plot_act_lvls(data: dict, player_id: str):
+def plot_act_lvls(data, fig_name: str):
     from matplotlib import pyplot as plt
     fig, axs = plt.subplots(2, 2)
 
-    x = range(data[player_id].shape[0])
+    x = range(data.shape[0])
 
-    axs[0][0].plot(x, data[player_id][:, 0])
+    axs[0][0].plot(x, data[:, 0])
     axs[0][0].set_title('Attack')
 
-    axs[0][1].plot(x, data[player_id][:, 1])
+    axs[0][1].plot(x, data[:, 1])
     axs[0][1].set_title('Defense')
 
-    axs[1][0].plot(x, data[player_id][:, 2])
+    axs[1][0].plot(x, data[:, 2])
     axs[1][0].set_title('Collaboration')
 
-    axs[1][1].plot(x, data[player_id][:, 3])
+    axs[1][1].plot(x, data[:, 3])
     axs[1][1].set_title('Foul')
-    fig.suptitle("Activity Levels for player #{}".format(player_id))
-    fig.tight_layout()
+    fig.suptitle(fig_name)
     fig.subplots_adjust(top=0.9)
+    fig.tight_layout()
+    # fig.savefig(fig_name)
     plt.show()
 
 
@@ -146,5 +146,11 @@ if __name__ == '__main__':
     all_events.loc[all_events['MatchPeriod'] == '2H', 'EventTime'] += 45 * 60  # add 45 minutes
     all_events.sort_values('EventTime', inplace=True)
     for mi in match_ids:
-        match_act_lvls = {pid: player_activity_levels(all_events, mi, pid) for pid in huskies_player_ids}
-        plot_act_lvls(match_act_lvls, 'Huskies_M1')
+        match_act_lvls = {mi: player_activity_levels(all_events, mi, player_id=None) for mi in match_ids}
+        plot_act_lvls(match_act_lvls[mi], 'match #{}'.format(mi))
+    # data = np.asarray(
+    #     [
+    #         [player_activity_levels(all_events, mi, pid) for pid in huskies_player_ids]
+    #         for mi in match_ids
+    #     ]
+    # )

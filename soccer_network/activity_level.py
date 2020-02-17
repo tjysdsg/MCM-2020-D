@@ -80,13 +80,20 @@ def get_activity_scores(etype: str, esubtype: str) -> Tuple[float, float, float,
 
 
 def player_activity_levels(time_series_data: pd.DataFrame,
+                           match_id: int,
                            player_id: str,
                            interval_seconds: float = 60.0) -> np.ndarray:
     """Calculate the activity levels of a player in a series of time interval"""
     timer = 0
     activity_scores = np.zeros(4, dtype=float)
     act_lvls = []
-    player_data = time_series_data[time_series_data['OriginPlayerID'] == player_id]
+    player_data = time_series_data[
+        (time_series_data['OriginPlayerID'] == player_id) &
+        (time_series_data['MatchID'] == match_id)
+        ]
+    if len(player_data) == 0:
+        print("Warning: no data for player #{0} in match #{1}".format(player_id, match_id))
+        return np.zeros((1, 4))
     player_time = player_data['EventTime'].to_numpy()
     etypes = player_data['EventType']
     esubtypes = player_data['EventSubType']
@@ -126,8 +133,18 @@ def plot_act_lvls(data: dict, player_id: str):
     plt.show()
 
 
+def get_corr(**kwargs):
+    kwargs.update({'MatchID': match_ids})
+    df = pd.DataFrame(kwargs).set_index('MatchID')
+    df = df.join(matches_df[['Outcome', 'OwnScore']], how='left')
+    df['ScoreDiff'] = matches_df['Outcome'] - matches_df['OwnScore']
+    return df.corr()
+
+
 if __name__ == '__main__':
+    # FIXME is the first half really 45 min?
     all_events.loc[all_events['MatchPeriod'] == '2H', 'EventTime'] += 45 * 60  # add 45 minutes
     all_events.sort_values('EventTime', inplace=True)
-    activity_lvls = {pid: player_activity_levels(all_events, pid) for pid in huskies_player_ids}
-    plot_act_lvls(activity_lvls, 'Huskies_M1')
+    for mi in match_ids:
+        match_act_lvls = {pid: player_activity_levels(all_events, mi, pid) for pid in huskies_player_ids}
+        plot_act_lvls(match_act_lvls, 'Huskies_M1')

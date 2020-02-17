@@ -108,6 +108,17 @@ def katz_centrality(g: Graph):
     return centrality.katz(g, weight=g.edge_properties['weight'])
 
 
+def authority_hub_centrality(g: Graph):
+    return centrality.hits(g, weight=g.edge_properties['weight'])
+
+
+def post_authority_hub_centrality(results):
+    eig, authority, hub = zip(*results)
+    auth_mean, auth_std = get_mean_std_of_scalar_vertex_properties(authority)
+    hub_mean, hub_std = get_mean_std_of_scalar_vertex_properties(hub)
+    print(get_corr(auth_mean=auth_mean, auth_std=auth_std, hub_mean=hub_mean, hub_std=hub_std, eigenvalue=eig))
+
+
 post_pagerank_centrality = \
     post_closeness_centrality = \
     post_clustering_coefficient = \
@@ -124,6 +135,7 @@ metrics: List[Callable] = [
     betweenness_centrality,
     eigenvector_centrality,
     katz_centrality,
+    authority_hub_centrality,
     motifs,
 ]
 
@@ -139,6 +151,7 @@ post_metrics: List[Callable] = [
     post_beweenness_centrality,
     post_eigenvector_centrality,
     post_katz_centrality,
+    post_authority_hub_centrality,
     post_motifs,
 ]
 

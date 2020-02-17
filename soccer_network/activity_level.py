@@ -1,8 +1,13 @@
 from soccer_network.data import *
-from matplotlib import pyplot as plt
 from typing import Tuple, List
+from matplotlib import pyplot as plt
+import matplotlib as mpl
 import pandas as pd
 import numpy as np
+
+mpl.rc("savefig", dpi=200)
+
+__all__ = ['get_activity_level']
 
 # (attack, defense, collaborate, foul)
 activity_scores = {
@@ -55,7 +60,7 @@ activity_scores = {
 }
 
 
-def get_activity_scores(etype: str, esubtype: str) -> Tuple[float, float, float, float]:
+def get_event_scores(etype: str, esubtype: str) -> Tuple[float, float, float, float]:
     subtype_scores = activity_scores.get(etype)
     if subtype_scores is None:
         return 0, 0, 0, 0
@@ -65,11 +70,11 @@ def get_activity_scores(etype: str, esubtype: str) -> Tuple[float, float, float,
         return subtype_scores
 
 
-def player_activity_levels(time_series_data: pd.DataFrame,
-                           match_id: int or None,
-                           player_id: str or None,
-                           team_id: str = 'Huskies',
-                           interval_seconds: float = 60.0) -> np.ndarray or None:
+def cal_act_lvls(time_series_data: pd.DataFrame,
+                 match_id: int or None,
+                 player_id: str or None,
+                 team_id: str = 'Huskies',
+                 interval_seconds: float = 60.0) -> np.ndarray or None:
     """Calculate the activity levels of a player in a series of time interval"""
     timer = 0
     curr_act_lvl = np.zeros(4, dtype=float)
@@ -95,7 +100,7 @@ def player_activity_levels(time_series_data: pd.DataFrame,
             timer = interval
             curr_act_lvl.fill(0)
         else:  # otherwise store data and increment timer
-            curr_act_lvl += np.asarray(get_activity_scores(etypes.iloc[i], esubtypes.iloc[i]))
+            curr_act_lvl += np.asarray(get_event_scores(etypes.iloc[i], esubtypes.iloc[i]))
             timer += interval
     return np.asarray(act_lvls)
 
@@ -116,6 +121,13 @@ def plot_act_lvls(data, axs, label: str):
     axs[1][1].set_title('Foul')
 
 
+def vline(xs: List[float], ax, color: str, low: float, label: str = None):
+    """Plot a vertical line at x"""
+    y_vals = [low, 0]
+    for x in xs:
+        ax.plot([x, x], y_vals, '-', color=color, label=label)
+
+
 def get_activity_level():
     # FIXME is the first half really 45 min?
     all_events.loc[all_events['MatchPeriod'] == '2H', 'EventTime'] += 45 * 60  # add 45 minutes
@@ -130,9 +142,16 @@ def get_activity_level():
         df_dict['oppo_std_' + types[i]] = []
 
     for mi in match_ids:
-        oppo_team_id = matches_df[matches_df['MatchID'] == mi]['OpponentID'].to_list()[0]
-        huskies_act_lvls = player_activity_levels(all_events, mi, player_id=None, team_id='Huskies')
-        oppo_act_lvls = player_activity_levels(all_events, mi, player_id=None, team_id=oppo_team_id)
+        match_data = matches_df[matches_df['MatchID'] == mi]
+        outcome = match_data['Outcome'].to_list()[0]
+        oppo_team_id = match_data['OpponentID'].to_list()[0]
+
+        shots = all_events[(all_events['EventType'] == 'Shot') & (all_events['MatchID'] == mi)]
+        huskies_shots_time = shots[shots['TeamID'] == 'Huskies']['EventTime']
+        oppo_shots_time = shots[shots['TeamID'] == oppo_team_id]['EventTime']
+
+        huskies_act_lvls = cal_act_lvls(all_events, mi, player_id=None, team_id='Huskies')
+        oppo_act_lvls = cal_act_lvls(all_events, mi, player_id=None, team_id=oppo_team_id)
 
         oppo_len = oppo_act_lvls.shape[0]
         huskies_len = huskies_act_lvls.shape[0]
@@ -147,24 +166,29 @@ def get_activity_level():
             df_dict['oppo_mean_' + types[i]].append(np.mean(oppo_act_lvls[:, i]))
             df_dict['oppo_std_' + types[i]].append(np.std(oppo_act_lvls[:, i]))
 
-    df = pd.DataFrame(df_dict)
-    df.set_index('MatchID', inplace=True)
-    # pd.set_option('display.max_rows', None)
-    # pd.set_option('display.max_columns', None)
-    # pd.set_option('display.width', None)
-    # pd.set_option('display.max_colwidth', -1)
-    # print(df.corr(method='spearman'))
-
-    return df
-
-
-if __name__ == '__main__':
-    get_activity_level()
-"""
         # plot
         fig, axs = plt.subplots(2, 2)
+        fig.set_size_inches(10.24, 7.68)
         plot_act_lvls(huskies_act_lvls, axs, 'Huskies')
         plot_act_lvls(oppo_act_lvls, axs, oppo_team_id)
+        # plot shots occurring time
+        huskies_shots_time /= 60
+        oppo_shots_time /= 60
+        low = [
+            axs[0, 0].get_ylim()[0],
+            axs[0, 1].get_ylim()[0],
+            axs[1, 0].get_ylim()[0],
+            axs[1, 1].get_ylim()[0],
+        ]
+        color = 'b'
+        name = 'huskies shots'
+        for s in [huskies_shots_time, oppo_shots_time]:
+            vline(s, axs[0][0], color=color, low=low[0], label=name)
+            vline(s, axs[0][1], color=color, low=low[1])
+            vline(s, axs[1][0], color=color, low=low[2])
+            vline(s, axs[1][1], color=color, low=low[3])
+            color = 'r'
+            name = 'opponenet shots'
         # configure figures
         fig_name = "match-{}-huskies-vs-{}-outcome-{}".format(mi, oppo_team_id, outcome)
         fig.suptitle(fig_name)
@@ -176,32 +200,11 @@ if __name__ == '__main__':
         plt.clf()
         plt.cla()
         plt.close()
-"""
 
-"""
-        # activity index
-        huskies_act_lvls[:, -1] = -huskies_act_lvls[:, -1]
-        huskies_combined_act = -np.sum(
-            np.divide(1, huskies_act_lvls, out=np.zeros_like(huskies_act_lvls), where=huskies_act_lvls != 0),
-            axis=1)
-        oppo_act_lvls[:, -1] = -oppo_act_lvls[:, -1]
-        oppo_combined_act = -np.sum(
-            np.divide(1, oppo_act_lvls, out=np.zeros_like(oppo_act_lvls), where=oppo_act_lvls != 0),
-            axis=1)
+    df = pd.DataFrame(df_dict)
+    df.set_index('MatchID', inplace=True)
+    return df
 
-        x1 = range(huskies_combined_act.shape[0])
-        plt.plot(x1, huskies_combined_act, label='huskies')
-        x2 = range(oppo_combined_act.shape[0])
-        plt.plot(x2, oppo_combined_act, label=oppo_team_id)
 
-        # configure figures
-        fig_name = "match-{}-huskies-vs-{}-outcome-{}".format(mi, oppo_team_id, outcome)
-        plt.title(fig_name)
-        plt.legend()
-        # save and close
-        # plt.show()
-        plt.savefig('../images/activity_index/' + fig_name)
-        plt.clf()
-        plt.cla()
-        plt.close()
-"""
+if __name__ == '__main__':
+    get_activity_level()

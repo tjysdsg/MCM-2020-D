@@ -25,20 +25,21 @@ if __name__ == "__main__":
         oppo_data.append(oppo_act_lvls)
 
     huskies_data = pad(huskies_data)
+    huskies_data.shape = *(huskies_data.shape[:-2]), -1
     oppo_data = pad(oppo_data)
+    oppo_data.shape = *(oppo_data.shape[:-2]), -1
 
     df = np.hstack([huskies_data, oppo_data])
 
     y = matches_df['Outcome']
-    best_params = {'criterion': 'entropy', 'max_depth': 2, 'max_features': 'auto', 'n_estimators': 80}
-    # rfc = RandomForestClassifier(**best_params)
+    best_params = {'criterion': 'gini', 'max_depth': 2, 'max_features': 'log2', 'n_estimators': 80}
+    rfc = RandomForestClassifier(**best_params, random_state=24)
     # rfc.fit(df, y)
 
     from sklearn.model_selection import KFold
 
-    kf = KFold(n_splits=5)
+    kf = KFold(n_splits=6)
     for train_index, test_index in kf.split(df):
-        print("TRAIN:", train_index, "TEST:", test_index)
         rfc = RandomForestClassifier(**best_params)
         X_train, X_test = df[train_index], df[test_index]
         y_train, y_test = y[train_index], y[test_index]
@@ -52,6 +53,8 @@ if __name__ == "__main__":
     #     'max_features': ['auto', 'sqrt', 'log2', 0.6],
     # }
     # from sklearn.model_selection import GridSearchCV
+
+    # rfc = RandomForestClassifier()
     # clf = GridSearchCV(rfc, parameters)
     # clf.fit(df, matches_df['Outcome'])
     # print(clf.best_params_)

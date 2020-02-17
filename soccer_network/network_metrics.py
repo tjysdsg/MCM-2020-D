@@ -96,6 +96,14 @@ def post_beweenness_centrality(results: List[VertexPropertyMap]):
     return mean, std, cpd
 
 
+def eigenvector_centrality(g: Graph):
+    return centrality.eigenvector(g, g.edge_properties['weight'])[0]
+
+
+def post_eigenvector_centrality(results: List[float]):
+    print(get_corr(eigenvalue=results))
+
+
 post_pagerank_centrality = \
     post_closeness_centrality = \
     post_clustering_coefficient = \
@@ -109,6 +117,7 @@ metrics: List[Callable] = [
     pagerank_centrality,
     closeness_centrality,
     betweenness_centrality,
+    eigenvector_centrality,
     motifs,
 ]
 
@@ -122,6 +131,7 @@ post_metrics: List[Callable] = [
     post_pagerank_centrality,
     post_closeness_centrality,
     post_beweenness_centrality,
+    post_eigenvector_centrality,
     post_motifs,
 ]
 

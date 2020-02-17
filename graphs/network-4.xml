@@ -8,7 +8,7 @@
   <key id="key1" for="node" attr.name="player_coords" attr.type="vector_float" />
   <key id="key2" for="node" attr.name="player_id" attr.type="string" />
   <key id="key3" for="node" attr.name="player_n_coords" attr.type="int" />
-  <key id="key4" for="edge" attr.name="weight" attr.type="int" />
+  <key id="key4" for="edge" attr.name="weight" attr.type="float" />
 
   <graph id="G" edgedefault="directed" parse.nodeids="canonical" parse.edgeids="canonical" parse.order="nodesfirst">
 
@@ -88,25 +88,25 @@
 
    <!-- edges -->
     <edge id="e0" source="n0" target="n3">
-      <data key="key4">2</data>
+      <data key="key4">2.7999999999999998</data>
     </edge>
     <edge id="e1" source="n0" target="n5">
-      <data key="key4">14</data>
+      <data key="key4">14.5</data>
     </edge>
     <edge id="e2" source="n0" target="n2">
-      <data key="key4">7</data>
+      <data key="key4">7.5</data>
     </edge>
     <edge id="e3" source="n0" target="n6">
       <data key="key4">6</data>
     </edge>
     <edge id="e4" source="n0" target="n8">
-      <data key="key4">3</data>
+      <data key="key4">3.5</data>
     </edge>
     <edge id="e5" source="n0" target="n7">
       <data key="key4">2</data>
     </edge>
     <edge id="e6" source="n0" target="n11">
-      <data key="key4">2</data>
+      <data key="key4">2.3999999999999999</data>
     </edge>
     <edge id="e7" source="n0" target="n9">
       <data key="key4">1</data>
@@ -124,7 +124,7 @@
       <data key="key4">3</data>
     </edge>
     <edge id="e12" source="n1" target="n11">
-      <data key="key4">5</data>
+      <data key="key4">6.5</data>
     </edge>
     <edge id="e13" source="n1" target="n8">
       <data key="key4">2</data>
@@ -154,10 +154,10 @@
       <data key="key4">13</data>
     </edge>
     <edge id="e22" source="n2" target="n6">
-      <data key="key4">7</data>
+      <data key="key4">7.5</data>
     </edge>
     <edge id="e23" source="n2" target="n7">
-      <data key="key4">1</data>
+      <data key="key4">1.5</data>
     </edge>
     <edge id="e24" source="n2" target="n0">
       <data key="key4">7</data>
@@ -181,7 +181,7 @@
       <data key="key4">1</data>
     </edge>
     <edge id="e31" source="n3" target="n5">
-      <data key="key4">2</data>
+      <data key="key4">2.5</data>
     </edge>
     <edge id="e32" source="n3" target="n3">
       <data key="key4">1</data>
@@ -190,7 +190,7 @@
       <data key="key4">1</data>
     </edge>
     <edge id="e34" source="n3" target="n11">
-      <data key="key4">1</data>
+      <data key="key4">1.5</data>
     </edge>
     <edge id="e35" source="n4" target="n8">
       <data key="key4">5</data>
@@ -202,13 +202,13 @@
       <data key="key4">2</data>
     </edge>
     <edge id="e38" source="n4" target="n12">
-      <data key="key4">3</data>
+      <data key="key4">3.3999999999999999</data>
     </edge>
     <edge id="e39" source="n4" target="n3">
       <data key="key4">2</data>
     </edge>
     <edge id="e40" source="n4" target="n11">
-      <data key="key4">6</data>
+      <data key="key4">7.4000000000000004</data>
     </edge>
     <edge id="e41" source="n4" target="n2">
       <data key="key4">8</data>
@@ -217,7 +217,7 @@
       <data key="key4">2</data>
     </edge>
     <edge id="e43" source="n4" target="n5">
-      <data key="key4">1</data>
+      <data key="key4">1.5</data>
     </edge>
     <edge id="e44" source="n4" target="n9">
       <data key="key4">5</data>
@@ -226,16 +226,16 @@
       <data key="key4">2</data>
     </edge>
     <edge id="e46" source="n5" target="n11">
-      <data key="key4">11</data>
+      <data key="key4">12.4</data>
     </edge>
     <edge id="e47" source="n5" target="n12">
-      <data key="key4">4</data>
+      <data key="key4">4.9000000000000004</data>
     </edge>
     <edge id="e48" source="n5" target="n6">
       <data key="key4">1</data>
     </edge>
     <edge id="e49" source="n5" target="n7">
-      <data key="key4">10</data>
+      <data key="key4">10.5</data>
     </edge>
     <edge id="e50" source="n5" target="n0">
       <data key="key4">8</data>
@@ -247,19 +247,19 @@
       <data key="key4">1</data>
     </edge>
     <edge id="e53" source="n5" target="n10">
-      <data key="key4">2</data>
+      <data key="key4">2.5</data>
     </edge>
     <edge id="e54" source="n5" target="n9">
-      <data key="key4">1</data>
+      <data key="key4">1.3999999999999999</data>
     </edge>
     <edge id="e55" source="n5" target="n1">
       <data key="key4">1</data>
     </edge>
     <edge id="e56" source="n6" target="n5">
-      <data key="key4">5</data>
+      <data key="key4">5.4000000000000004</data>
     </edge>
     <edge id="e57" source="n6" target="n4">
-      <data key="key4">2</data>
+      <data key="key4">2.3999999999999999</data>
     </edge>
     <edge id="e58" source="n6" target="n11">
       <data key="key4">1</data>
@@ -286,19 +286,19 @@
       <data key="key4">6</data>
     </edge>
     <edge id="e66" source="n7" target="n5">
-      <data key="key4">5</data>
+      <data key="key4">5.5</data>
     </edge>
     <edge id="e67" source="n7" target="n11">
       <data key="key4">3</data>
     </edge>
     <edge id="e68" source="n7" target="n3">
-      <data key="key4">2</data>
+      <data key="key4">2.5</data>
     </edge>
     <edge id="e69" source="n7" target="n1">
-      <data key="key4">5</data>
+      <data key="key4">5.5</data>
     </edge>
     <edge id="e70" source="n7" target="n4">
-      <data key="key4">3</data>
+      <data key="key4">3.3999999999999999</data>
     </edge>
     <edge id="e71" source="n7" target="n0">
       <data key="key4">1</data>
@@ -310,16 +310,16 @@
       <data key="key4">1</data>
     </edge>
     <edge id="e74" source="n7" target="n7">
-      <data key="key4">1</data>
+      <data key="key4">1.3999999999999999</data>
     </edge>
     <edge id="e75" source="n7" target="n10">
-      <data key="key4">1</data>
+      <data key="key4">1.5</data>
     </edge>
     <edge id="e76" source="n7" target="n8">
       <data key="key4">2</data>
     </edge>
     <edge id="e77" source="n8" target="n1">
-      <data key="key4">3</data>
+      <data key="key4">3.5</data>
     </edge>
     <edge id="e78" source="n8" target="n4">
       <data key="key4">5</data>
@@ -337,7 +337,7 @@
       <data key="key4">6</data>
     </edge>
     <edge id="e83" source="n8" target="n12">
-      <data key="key4">1</data>
+      <data key="key4">1.3999999999999999</data>
     </edge>
     <edge id="e84" source="n8" target="n5">
       <data key="key4">4</data>
@@ -346,13 +346,13 @@
       <data key="key4">1</data>
     </edge>
     <edge id="e86" source="n9" target="n8">
-      <data key="key4">3</data>
+      <data key="key4">3.5</data>
     </edge>
     <edge id="e87" source="n9" target="n7">
       <data key="key4">1</data>
     </edge>
     <edge id="e88" source="n9" target="n2">
-      <data key="key4">5</data>
+      <data key="key4">5.5</data>
     </edge>
     <edge id="e89" source="n9" target="n11">
       <data key="key4">1</data>
@@ -364,7 +364,7 @@
       <data key="key4">3</data>
     </edge>
     <edge id="e92" source="n9" target="n5">
-      <data key="key4">3</data>
+      <data key="key4">3.7999999999999998</data>
     </edge>
     <edge id="e93" source="n9" target="n13">
       <data key="key4">1</data>
@@ -391,10 +391,10 @@
       <data key="key4">2</data>
     </edge>
     <edge id="e101" source="n11" target="n12">
-      <data key="key4">1</data>
+      <data key="key4">1.5</data>
     </edge>
     <edge id="e102" source="n11" target="n10">
-      <data key="key4">1</data>
+      <data key="key4">1.3999999999999999</data>
     </edge>
     <edge id="e103" source="n11" target="n9">
       <data key="key4">2</data>
@@ -421,7 +421,7 @@
       <data key="key4">1</data>
     </edge>
     <edge id="e111" source="n12" target="n2">
-      <data key="key4">1</data>
+      <data key="key4">1.5</data>
     </edge>
     <edge id="e112" source="n12" target="n11">
       <data key="key4">2</data>

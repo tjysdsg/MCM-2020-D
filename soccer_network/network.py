@@ -13,7 +13,7 @@ class Network:
         self.g.vertex_properties['player_coords'] = self.g.new_vertex_property("vector<float>")
         self.g.vertex_properties['average_player_coords'] = self.g.new_vertex_property("vector<float>")
         self.g.vertex_properties['player_n_coords'] = self.g.new_vertex_property("int")
-        self.g.edge_properties['weight'] = self.g.new_edge_property("int")
+        self.g.edge_properties['weight'] = self.g.new_edge_property("float")
 
     @property
     def edge_weights(self):

@@ -1,4 +1,5 @@
 from soccer_network.data import *
+from matplotlib import pyplot as plt
 from typing import Tuple, List
 import pandas as pd
 import numpy as np
@@ -114,31 +115,20 @@ def player_activity_levels(time_series_data: pd.DataFrame,
     return np.asarray(act_lvls)
 
 
-def plot_act_lvls(data, fig_name: str):
-    from matplotlib import pyplot as plt
-    fig, axs = plt.subplots(2, 2)
-
+def plot_act_lvls(data, axs, label: str):
     x = range(data.shape[0])
 
-    axs[0][0].plot(x, data[:, 0])
-    axs[0][0].set_title('Attack')
+    axs[0][0].plot(x, data[:, 0], label=label)
+    axs[0][0].set_title('Attack', loc='left')
 
-    axs[0][1].plot(x, data[:, 1])
-    axs[0][1].set_title('Defense')
+    axs[0][1].plot(x, data[:, 1], label=label)
+    axs[0][1].set_title('Defense', loc='right')
 
-    axs[1][0].plot(x, data[:, 2])
+    axs[1][0].plot(x, data[:, 2], label=label)
     axs[1][0].set_title('Collaboration')
 
-    axs[1][1].plot(x, data[:, 3])
+    axs[1][1].plot(x, data[:, 3], label=label)
     axs[1][1].set_title('Foul')
-    fig.suptitle(fig_name)
-    fig.subplots_adjust(top=0.9)
-    fig.tight_layout()
-    fig.savefig('../images/activity_levels/' + fig_name)
-    # plt.show()
-    plt.clf()
-    plt.cla()
-    plt.close()
 
 
 def get_corr(**kwargs):
@@ -153,10 +143,24 @@ if __name__ == '__main__':
     # FIXME is the first half really 45 min?
     all_events.loc[all_events['MatchPeriod'] == '2H', 'EventTime'] += 45 * 60  # add 45 minutes
     all_events.sort_values('EventTime', inplace=True)
-    for team_n in range(1, 20):
-        team_id = 'Opponent{}'.format(team_n)
-        for mi in match_ids:
-            match_act_lvls = {mi: player_activity_levels(all_events, mi, player_id=None, team_id=team_id) for mi in
-                              match_ids}
-            if match_act_lvls[mi] is not None:
-                plot_act_lvls(match_act_lvls[mi], 'match#{}-team#{}'.format(mi, team_id))
+    for mi in match_ids:
+        oppo_team_id = matches_df[matches_df['MatchID'] == mi]['OpponentID'].to_list()[0]
+        outcome = matches_df[matches_df['MatchID'] == mi]['Outcome'].to_list()[0]
+        huskies_act_lvls = player_activity_levels(all_events, mi, player_id=None, team_id='Huskies')
+        oppo_act_lvls = player_activity_levels(all_events, mi, player_id=None, team_id=oppo_team_id)
+
+        # plot
+        fig, axs = plt.subplots(2, 2)
+        plot_act_lvls(huskies_act_lvls, axs, 'Huskies')
+        plot_act_lvls(oppo_act_lvls, axs, oppo_team_id)
+        # configure figures
+        fig_name = "match-{}-huskies-vs-{}-outcome-{}".format(mi, oppo_team_id, outcome)
+        fig.suptitle(fig_name)
+        fig.subplots_adjust(top=0.8)
+        fig.tight_layout()
+        plt.legend()
+        # save and close
+        fig.savefig('../images/activity_levels/' + fig_name)
+        plt.clf()
+        plt.cla()
+        plt.close()
